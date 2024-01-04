@@ -2,6 +2,7 @@ import os, sys, re, json, math
 import numpy                      as np
 import scipy.interpolate          as itp
 import scipy.integrate            as itg
+import scipy.optimize             as opt
 import nkUtilities.plot1D         as pl1
 import nkUtilities.load__config   as lcf
 import nkUtilities.configSettings as cfs
@@ -10,11 +11,16 @@ import nkUtilities.configSettings as cfs
 # ========================================================= #
 # ===  fit__forRIproduction                             === #
 # ========================================================= #
-def fit__forRIproduction( xD=None, yD=None, xI=None, mode="linear" ):
+def fit__forRIproduction( xD=None, yD=None, xI=None, mode="linear", p0=None ):
     
     if   ( mode == "linear" ):
         fitFunc = itp.interp1d( xD, yD, kind="linear" )
         yI      = fitFunc( xI )
+    elif ( mode == "gaussian" ):
+        fitFunc   = lambda eng,c1,c2,c3,c4,c5 : \
+            c1*np.exp( -1.0/c2*( eng-c3 )**2 ) +c4*eng +c5
+        copt,cvar = opt.curve_fit( fitFunc, xD, yD, p0=p0 )
+        yI        = fitFunc( xI, *copt )
     else:
         print( "[estimate__RIproduction.py] undefined mode :: {} ".format( mode ) )
         sys.exit()
@@ -38,7 +44,7 @@ def draw__figures( params=None, EAxis=None, pf_fit=None, xs_fit=None, dYield=Non
     pf_norm_str = "10^{" + str( round( math.log10( params["plot.photon.norm"]   ) ) ) + "}"
     dY_norm_str = "10^{" + str( round( math.log10( params["plot.dYield.norm"]   ) ) ) + "}"
     label_xs    = "$\sigma(E)/" + xs_norm_str + "\ \mathrm{(mb)}$"
-    label_pf    = "$\phi(E)/"   + pf_norm_str + "\ \mathrm{(photons/s)}$"
+    label_pf    = "$\phi(E)/"   + pf_norm_str + "\ \mathrm{(photons/MeV/s)}$"
     label_dY    = "$dY/ "       + dY_norm_str + "\ \mathrm{(atoms/s)}$"
     
     # ------------------------------------------------- #
@@ -133,7 +139,8 @@ def estimate__RIproduction():
     import nkUtilities.load__pointFile as lpf
     photonFlux   = lpf.load__pointFile( inpFile=params["photon.filename"], returnType="point" )
     pf_fit       = fit__forRIproduction( xD=photonFlux[:,e_], yD=photonFlux[:,pf_], \
-                                         xI=EAxis, mode=params["photon.interpolate"] )
+                                         xI=EAxis, mode=params["photon.fit.method"], \
+                                         p0=params["photon.fit.p0"] )
     pf_fit       = params["photon.current"] * pf_fit
     
     # ------------------------------------------------- #
@@ -142,9 +149,11 @@ def estimate__RIproduction():
     import nkUtilities.load__pointFile as lpf
     xsection     = lpf.load__pointFile( inpFile=params["xsection.filename"], returnType="point")
     xs_fit       = fit__forRIproduction( xD=xsection[:,e_], yD=xsection[:,xs_], \
-                                         xI=EAxis, mode=params["xsection.interpolate"] )
+                                         xI=EAxis, mode=params["xsection.fit.method"], \
+                                         p0=params["xsection.fit.p0"] )
     if ( params["xsection.unit"] == "mb" ):
-        xs_fit   = mb2cm2 * xs_fit
+        xs_fit_mb = np.copy( xs_fit )
+        xs_fit    = mb2cm2 * xs_fit
     else:
         print( "[estimate__RIproduction.py] xsection.unit == {} is not supported... [ERROR] ".format( params["xsection.unit"] ) )
         sys.exit()
@@ -163,7 +172,7 @@ def estimate__RIproduction():
     # ------------------------------------------------- #
     # --- [7] draw sigma(E), phi(E), dY(E)          --- #
     # ------------------------------------------------- #
-    draw__figures( params=params, EAxis=EAxis, pf_fit=pf_fit, xs_fit=xs_fit, dYield=dYield )
+    draw__figures( params=params, EAxis=EAxis, pf_fit=pf_fit, xs_fit=xs_fit_mb, dYield=dYield )
     
     # ------------------------------------------------- #
     # --- [8] save & return                         --- #

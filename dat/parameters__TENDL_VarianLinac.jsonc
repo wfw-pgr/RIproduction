@@ -11,13 +11,12 @@
     "photon.current":26.0,               // (uA)
     // "xsection.filename":"dat/xs__BreitWigner_Ra226_gn_Ra225.dat", 
     // "xsection.fit.method":"linear",   // "linear", "gaussian"
-    // "xsection.fit.p0":null, // linear
     "xsection.filename":"dat/xs__TENDL_Ra226_gn_Ra225.dat", 
     "xsection.fit.method":"gaussian", 
     "xsection.fit.p0":[288,6.0,11.0,1.0,5.0], // gaussian
     "xsection.unit":"mb",
     "integral.method":"simpson",
-    "results.filename":"dat/results_BreitWigner_VarianLinac.dat", 
+    "results.filename":"dat/results.dat", 
     
     "plot.filename":"png/estimate__RIproduction.png", 
     "plot.xRange":[0.0,20.0,11], 
