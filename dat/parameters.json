@@ -1,0 +1,18 @@
+{
+    "xs.mode":"BreitWigner",
+    "pf.mode":"Melville's",
+    "energy.min":0.0,
+    "energy.max":0.0,
+    "energy.nE":201,
+    "BreitWigner.Er":13.45,
+    "BreitWigner.Et":6.4,
+    "BreitWigner.Gamma":3.97,
+    "BreitWigner.sigma_r.mb":521.0,
+    "EfitLim":5.5,
+    "density":5.0,
+    "massNumber":226,
+    "thickness":1.0,
+    "normalizeFactor":80.7,
+    "photon.interpolate":"exp_fit"
+
+}

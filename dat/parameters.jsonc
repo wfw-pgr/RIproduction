@@ -1,0 +1,54 @@
+{
+    "EAxis.min":0.0,                     // (MeV)
+    "EAxis.max":20.0,                    // (MeV)
+    "EAxis.num":201,
+    "target.g/cm3":5.0,
+    "target.g/mol":226,
+    "target.thick.mm":10.0,              // (mm)
+    "photon.filename":"dat/photon_spectrum_VarianLinac.dat", 
+    "photon.interpolate":"linear",
+    "photon.current":26.0,               // (uA)
+    "xsection.filename":"dat/xs__BreitWigner_Ra226_gn_Ra225.dat", 
+    "xsection.interpolate":"linear",
+    "xsection.unit":"mb",
+    "integral.method":"simpson",
+    "results.filename":"dat/results.dat", 
+    
+    "plot.filename":"png/estimate__RIproduction.png", 
+    "plot.xRange":[0.0,20.0,11], 
+    "plot.yRange":[0.0,2.0,11], 
+    "plot.xsection.norm":1.0e3,          // (mb)         specify to be 10^x
+    "plot.photon.norm":1.0e12,           // (photons/s)  specify to be 10^x
+    "plot.dYield.norm":1.0e9,            // (atoms/s)    specify to be 10^x
+    
+    "BreitWigner.EAxis.min":0.0,         // (MeV)
+    "BreitWigner.EAxis.max":20.0,        // (MeV)
+    "BreitWigner.EAxis.num":201,
+    "BreitWigner.Er":13.45,              // (MeV)
+    "BreitWigner.Et":6.4,                // (MeV)
+    "BreitWigner.Gamma":3.97,            // (MeV)
+    "BreitWigner.sigma_r":521.0,         // (mb)
+    "BreitWigner.datFile":"dat/xs__BreitWigner_Ra226_gn_Ra225.dat",
+    "BreitWigner.pngFile":"png/xs__BreitWigner_Ra226_gn_Ra225.png",
+    "BreitWigner.label":"Ra226(g,n)Ra225",
+    "BreitWigner.xRange":[ 0.0,  20.0 ],
+    "BreitWigner.yRange":[ 0.0, 600.0 ],
+    "BreitWigner.xTicks":11,
+    "BreitWigner.yTicks":7,
+
+    "LinacPhi.EAxis.min":0.0,            // (MeV)
+    "LinacPhi.EAxis.max":20.0,           // (MeV)
+    "LinacPhi.EAxis.num":201,
+    "LinacPhi.refFile":"dat/photon_spectrum_VarianLinac_originalData.dat",
+    "LinacPhi.outFile":"dat/photon_spectrum_VarianLinac.dat",
+    "LinacPhi.pngFile":"png/photon_spectrum_VarianLinac.png",
+    "LinacPhi.fit.method":"exponential", // "CubicSpline", "exponential", "linear"
+    "LinacPhi.fit.eRange":[5.5,20.0],    // (MeV)
+    "LinacPhi.fit.Eth":6.4,              // (MeV)
+    "LinacPhi.fit.p0": [ 1.0e12, 1.0, 6.4, 1.0e11 ],
+    "LinacPhi.norm.method":"simpson",    // "simpson"
+    "LinacPhi.norm.current":1.0,         // (uA)
+    "LinacPhi.norm.e-g.efficiency":40.0, // (%) 
+
+    "end":0
+}
