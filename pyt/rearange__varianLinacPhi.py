@@ -69,7 +69,7 @@ def rearange__varianLinacPhi( paramsFile = "dat/parameters.jsonc" ):
     # ------------------------------------------------- #
     # --- [7] normalize phi(E) to match beam curr.  --- #
     # ------------------------------------------------- #
-    Fnorm           = normalize__photonSpectrum( EAxis=EAxis, pflux=pflux, spectrum=spectrum, params=params  )
+    Fnorm           = normalize__photonSpectrum( spectrum=spectrum, params=params  )
     pflux           = Fnorm * pflux
     spectrum[:,pf_] = Fnorm * spectrum[:,pf_]
     
@@ -135,7 +135,7 @@ def draw__figures( EAxis=None, pflux=None, spectrum=None, params=None ):
 # ========================================================= #
 # ===  normalize__photonSpectrum                        === #
 # ========================================================= #
-def normalize__photonSpectrum( EAxis=None, pflux=None, spectrum=None, params=None ):
+def normalize__photonSpectrum( spectrum=None, params=None ):
 
     e_, pf_ = 0, 1
     qe      = 1.602e-19
