@@ -18,7 +18,7 @@
     // "target.g/mol":226.0,                // Ra
     "target.g/cm3":4.9,                  // RaCl2
     "target.g/mol":297.0,                // RaCl2
-    "target.thick.type":"Bq",            // "Bq", "direct"
+    "target.thick.type":"Bq",            // "Bq", "direct", "fluence"
     "target.thick.direct.mm":10.0,
 
     "product.halflife.value":14.9,       // (Ra-225)

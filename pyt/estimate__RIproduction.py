@@ -44,7 +44,7 @@ def draw__figures( params=None, EAxis=None, pf_fit=None, xs_fit=None, \
     if ( params["plot.dYield.norm.auto"] ):
         params["plot.dYield.norm"] = 10.0**( math.floor( np.log10( abs( np.max( dYield ) ) ) ) )
     xs_fit_plot = xs_fit        / params["plot.xsection.norm"]
-    pf_fit_plot = pf_fit        / params["plot.photon.norm"]
+w    pf_fit_plot = pf_fit        / params["plot.photon.norm"]
     xs_raw_plot = xs_raw[:,xs_] / params["plot.xsection.norm"]
     pf_raw_plot = pf_raw[:,pf_] / params["plot.photon.norm"]
     dY_plot     = dYield / params["plot.dYield.norm"]
@@ -189,11 +189,17 @@ def calculate__parameters( params=None ):
     # ------------------------------------------------- #
     params["target.atoms/cm3"]   = N_Avogadro*( params["target.g/cm3"] / params["target.g/mol"] )
     if   ( params["target.thick.type"].lower() == "bq" ):
-        params["target.thick.cm"] = params["target.activity.Bq"] / \
+        params["target.thick.cm"]   = params["target.activity.Bq"] / \
             ( params["target.lambda.1/s"]*params["target.atoms/cm3"]*params["target.area.cm2"] )
+        params["target.tN_product"] = params["target.atoms/cm3"]*params["target.thick.cm"]
     elif ( params["target.thick.type"].lower() == "direct" ):
-        params["target.thick.cm"] = params["target.thick.direct.mm"] * mm2cm
-    params["target.tN_product"]  = params["target.atoms/cm3"] * ( params["target.thick.cm"] )
+        params["target.thick.cm"]   = params["target.thick.direct.mm"] * mm2cm
+        params["target.tN_product"] = params["target.atoms/cm3"]*params["target.thick.cm"]
+    elif ( params["target.thick.type"].lower() == "fluence" ):
+        params["target.thick.cm"]   = params["target.thick.direct.mm"] * mm2cm
+        params["target.tN_product"] = params["target.atoms/cm3"] # t is included in phi.t
+        # fluence = count/m2 = count*m/m3, => fluence x volume = count*m
+        
     # ------------------------------------------------- #
     # --- [5] return                                --- #
     # ------------------------------------------------- #
