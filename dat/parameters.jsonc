@@ -38,7 +38,8 @@
     /* ---  [4]  photon flux settings                                  --- */
     /* ------------------------------------------------------------------- */
     /*  photon flux's unit  ::  ( photons/MeV/uA/s )                       */
-    "photon.filename":"dat/photon_spectrum_fromPHITS_wTiW.dat", 
+    "photon.filename":"dat/photon_spectrum_fromPHITS_wTiW.dat",
+    "photon.binning":true,               // [ e_lower, e_upper, photon_data, error ] => true
     // "photon.filename":"dat/photon_spectrum_fromPHITS_132kBq_RaCl2.dat", 
     // "photon.filename":"dat/photon_spectrum_VarianLinac.dat",
     "photon.fit.method":"linear",
