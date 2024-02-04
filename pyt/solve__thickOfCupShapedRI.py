@@ -36,6 +36,7 @@ def solve__thickOfCupShapedRI( diameter=None, length=None, volume=None, \
     a1     = np.pi * diameter * ( length + 0.25*diameter )
     a0     = -1.0  * volume
     coeffs = [ a3, a2, a1, a0 ]
+    t_disk = ( 4.0*volume ) / ( np.pi * diameter**2 )
 
     # ------------------------------------------------- #
     # --- [3] search root                           --- #
@@ -47,15 +48,15 @@ def solve__thickOfCupShapedRI( diameter=None, length=None, volume=None, \
     if   ( nReals == 0 ):
         if not( silent ):
             print( "[solve__thickOfCupShapedRI.py] no root was found... [ERROR] " )
-        ret = None
+        t_cup = None
     elif ( nReals == 1 ):
         if not( silent ):
             print( "[solve__thickOfCupShapedRI.py]  1 root was found " )
-        ret = reals[0]
+        t_cup = reals[0]
     elif ( nReals >= 2 ):
         if not( silent ):
             print( "[solve__thickOfCupShapedRI.py] more than 2 roots were found...." )
-        ret = np.min( reals )
+        t_cup = np.min( reals )
 
     # ------------------------------------------------- #
     # --- [4] return                                --- #
@@ -63,8 +64,9 @@ def solve__thickOfCupShapedRI( diameter=None, length=None, volume=None, \
     if not( silent ):
         print( "[solve__thickOfCupShapedRI.py]  coeffs  == {}".format( coeffs ) )
         print( "[solve__thickOfCupShapedRI.py]  nReals  == {}".format( nReals ) )
-        print( "[solve__thickOfCupShapedRI.py]  root    == {}".format( ret    ) )
-    return( volume, ret )
+        print( "[solve__thickOfCupShapedRI.py]  root    == {}".format( t_cup  ) )
+    return( volume, t_cup, t_disk )
+
 
 
 # ========================================================= #
@@ -92,11 +94,11 @@ def display__length_vs_thick( datFile ="dat/length_dependency.dat", \
     # ------------------------------------------------- #
     thicks, volumes = [], []
     for ik,length in enumerate( length_array ):
-        vol, thick = solve__thickOfCupShapedRI( diameter=diameter, length=length, \
-                                                activity=activity, halflife=halflife, \
-                                                massDensity=massDensity, molarMass=molarMass, \
-                                                silent=True )
-        thicks  += [ thick ]
+        vol, t_cup, t_disk = solve__thickOfCupShapedRI( diameter=diameter, length=length, \
+                                                        activity=activity, halflife=halflife, \
+                                                        massDensity=massDensity, \
+                                                        molarMass=molarMass, silent=True )
+        thicks  += [ t_cup ]
         volumes += [ vol   ]
     thicks  = np.array( thicks  )
     volumes = np.array( volumes )
@@ -165,11 +167,12 @@ if ( __name__=="__main__" ):
     length     = 6.0
     volume     = 30.0
     silent     = False
-    vol, thick = solve__thickOfCupShapedRI( diameter=diameter, length=length, volume=volume, \
-                                            silent=silent )
+    vol, t_cup, t_disk = solve__thickOfCupShapedRI( diameter=diameter, length=length, \
+                                                    volume=volume, silent=silent )
     print()
-    print( "[solve__thickOfCupShapedRI.py]  volume  == {}".format( vol   ) )
-    print( "[solve__thickOfCupShapedRI.py]  thick   == {}".format( thick ) )
+    print( "[solve__thickOfCupShapedRI.py]  volume  == {}".format( vol    ) )
+    print( "[solve__thickOfCupShapedRI.py]  t_cup   == {}".format( t_cup  ) )
+    print( "[solve__thickOfCupShapedRI.py]  t_disk  == {}".format( t_disk ) )
     print()
 
     # ------------------------------------------------- #
@@ -179,20 +182,21 @@ if ( __name__=="__main__" ):
     print( "[From Activity of RI.]" )
     print()
     diameter    = 3.0
-    length      = 8.0
+    length      = 1.3e-4
     activity    = 120.0e3
     halflife_y  = 1600.0
     halflife_s  = halflife_y * 365 * 24 * 60 * 60
     massDensity = 4.90
     molarMass   = 297.0
     silent      = False
-    vol, thick  = solve__thickOfCupShapedRI( diameter=diameter, length=length, \
-                                             activity=activity, halflife=halflife_s, \
-                                             massDensity=massDensity, molarMass=molarMass, \
-                                             silent=silent )
+    vol,t_cup,t_disk = solve__thickOfCupShapedRI( diameter=diameter, length=length, \
+                                                  activity=activity, halflife=halflife_s, \
+                                                  massDensity=massDensity, molarMass=molarMass,\
+                                                  silent=silent )
     print()
-    print( "[solve__thickOfCupShapedRI.py]  volume  == {}".format( vol   ) )
-    print( "[solve__thickOfCupShapedRI.py]  thick   == {}".format( thick ) )
+    print( "[solve__thickOfCupShapedRI.py]  volume  == {}".format( vol    ) )
+    print( "[solve__thickOfCupShapedRI.py]  t_cup   == {}".format( t_cup  ) )
+    print( "[solve__thickOfCupShapedRI.py]  t_disk  == {}".format( t_disk ) )
     print()
 
     # ------------------------------------------------- #
