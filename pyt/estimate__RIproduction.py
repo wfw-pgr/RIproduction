@@ -238,6 +238,11 @@ def estimate__RIproduction():
     # ------------------------------------------------- #
     import nkUtilities.load__pointFile as lpf
     pf_raw     = lpf.load__pointFile( inpFile=params["photon.filename"], returnType="point" )
+    if ( params["photon.binning"] ):
+        e_avg  = np.average( pf_raw[:,0:2], axis=1 )
+        p_dat  = np.copy( pf_raw[:,2] )
+        pf_raw = np.concatenate( [ e_avg[:,np.newaxis], p_dat[:,np.newaxis] ], axis=1 )
+    pf_raw     = 
     pf_fit_uA  = fit__forRIproduction( xD=pf_raw[:,e_], yD=pf_raw[:,pf_], \
                                        xI=EAxis, mode=params["photon.fit.method"], \
                                        p0=params["photon.fit.p0"], \
