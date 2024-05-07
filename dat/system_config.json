@@ -1,0 +1,7 @@
+{
+
+    "photon.expr_from": "^#\s*e\-lower", 
+    "photon.expr_to"  : "^\s*$",
+    
+    
+}

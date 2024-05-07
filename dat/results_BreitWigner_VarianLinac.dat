@@ -19,7 +19,9 @@
             integral.EAxis.min :: 0.0
             integral.EAxis.max :: 20.0
             integral.EAxis.num :: 201
-               photon.filename :: dat/photon_spectrum_fromPHITS_wTiW.dat
+               photon.filetype :: energy-fluence
+               photon.filename :: dat/fluence_energy_phitsin.dat
+                photon.binning :: False
              photon.fit.method :: linear
                  photon.fit.p0 :: None
                 photon.fit.Eth :: 6.4
@@ -34,7 +36,7 @@
                    plot.yRange :: [0.0, 10.0, 11]
             plot.xsection.norm :: 100.0
               plot.photon.norm :: 100000000000.0
-              plot.dYield.norm :: 100000.0
+              plot.dYield.norm :: 10.0
          plot.dYield.norm.auto :: True
          BreitWigner.EAxis.min :: 0.0
          BreitWigner.EAxis.max :: 20.0
@@ -73,11 +75,11 @@
              target.tN_product :: 1.3593856119770157e+17
 
 [results]
-                         Yield ::  8.13432731e+05   (atoms/s)
-                     Nproduced ::  1.75701470e+10   (atoms)
-                     Aproduced ::  9.46021148e+03   (Bq)
+                         Yield ::  2.82601779e+02   (atoms/s)
+                     Nproduced ::  6.10419843e+06   (atoms)
+                     Aproduced ::  3.28665481e+00   (Bq)
                          t_max ::  1.50341449e+06   (s)
                        t_max_d ::  1.74006307e+01   (d)
                          ratio ::  4.45091063e+01   (%)
-                      Adecayed ::  4.21065558e+03   (Bq)
+                      Adecayed ::  1.46286068e+00   (Bq)
 

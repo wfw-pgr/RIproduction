@@ -9,11 +9,125 @@ import nkUtilities.configSettings as cfs
 
 
 # ========================================================= #
+# ===  estimate__RIproduction.py                        === #
+# ========================================================= #
+def estimate__RIproduction():
+
+    e_, pf_, xs_  =  0, 1, 1
+    mb2cm2        =  1.0e-27
+    configFile    =  "dat/system_config.json"
+    paramsFile    =  "dat/parameters.json"
+    
+    # ------------------------------------------------- #
+    # --- [1] load parameters from file             --- #
+    # ------------------------------------------------- #
+    import nkUtilities.json__formulaParser as jso
+    config  = jso.json__formulaParser( inpFile=configFile )
+    params  = jso.json__formulaParser( inpFile=paramsFile )
+    
+    # ------------------------------------------------- #
+    # --- [2] calculate parameters & define EAxis   --- #
+    # ------------------------------------------------- #
+    #  -- [2-1] energy axis                         --  #
+    EAxis  = np.linspace( params["integral.EAxis.min"], params["integral.EAxis.max"], \
+                          params["integral.EAxis.num"] )
+    #  -- [2-2] calculate other parameters          --  #
+    params = calculate__parameters( params=params )
+
+    # ------------------------------------------------- #
+    # --- [3] load photon flux                      --- #
+    # ------------------------------------------------- #
+    pf_fit_uA, pf_raw = load__photonFlux( EAxis=EAxis, params=params, config=config )
+    pf_fit            = params["photon.beam.current"] * pf_fit_uA
+    
+    # ------------------------------------------------- #
+    # --- [4] load cross-section                    --- #
+    # ------------------------------------------------- #
+    import nkUtilities.load__pointFile as lpf
+    xs_raw     = lpf.load__pointFile( inpFile=params["xsection.filename"], returnType="point")
+    xs_fit_mb  = fit__forRIproduction( xD=xs_raw[:,e_], yD=xs_raw[:,xs_], \
+                                       xI=EAxis, mode=params["xsection.fit.method"], \
+                                       p0=params["xsection.fit.p0"], \
+                                       threshold=params["xsection.fit.Eth"] )
+    xs_fit     = mb2cm2 * xs_fit_mb
+    
+    # ------------------------------------------------- #
+    # --- [5] calculate dY(E)                       --- #
+    # ------------------------------------------------- #
+    dYield       = params["target.tN_product"] * pf_fit * xs_fit
+    
+    # ------------------------------------------------- #
+    # --- [6] integrate dY(E) with respect to E     --- #
+    # ------------------------------------------------- #
+    if ( params["integral.method"] == "simpson" ):
+        Yield = itg.simpson( dYield, x=EAxis )
+    Nproduced = Yield * params["photon.beam.duration"] * 3600.0
+    Aproduced = Nproduced * params["product.lambda.1/s"]
+    lam1,lam2 = params["product.lambda.1/s"], params["decayed.lambda.1/s"]
+    t_max     = np.log( lam1/lam2 ) / ( lam1 - lam2 )
+    t_max_d   = t_max / (3600*24.0)
+    ratio     = ( lam2/( lam2-lam1 ) )*( np.exp( -lam1*t_max ) - np.exp( -lam2*t_max ) ) * 100.0
+    Adecayed  = ( ratio/100.0 ) * Aproduced
+    results   = { "Yield":Yield, "Nproduced":Nproduced, "Aproduced":Aproduced, \
+                  "t_max":t_max, "t_max_d":t_max_d, "ratio":ratio, "Adecayed":Adecayed }
+    
+    # ------------------------------------------------- #
+    # --- [7] draw sigma(E), phi(E), dY(E)          --- #
+    # ------------------------------------------------- #
+    draw__figures( params=params, EAxis=EAxis, pf_fit=pf_fit_uA, pf_raw=pf_raw, \
+                   xs_fit=xs_fit_mb, xs_raw=xs_raw, dYield=dYield )
+    
+    # ------------------------------------------------- #
+    # --- [8] save & return                         --- #
+    # ------------------------------------------------- #
+    Data = { "params":params, "EAxis":EAxis, "results":results, \
+             "pf_fit":pf_fit, "xs_fit":xs_fit, "dYield":dYield }
+    write__results( Data=Data, outFile=params["results.filename"] )
+    return( Yield )
+
+
+# ========================================================= #
+# ===  load photon flux                                 === #
+# ========================================================= #
+
+def load__photonFlux( EAxis=None, params=None, config=None, ):
+
+    e_, pf_ = 0, 1
+    
+    # ------------------------------------------------- #
+    # --- [1] load photon flux file                 --- #
+    # ------------------------------------------------- #
+    if   ( params["photon.filetype"] == "energy-fluence" ):
+        import nkUtilities.load__pointFile as lpf
+        pf_raw = lpf.load__pointFile( inpFile=params["photon.filename"], returnType="point" )
+    elif ( params["photon.filetype"] == "phits-out"      ):
+        # expr_from  = r"^#\s*e\-lower"
+        # expr_to    = r"^\s*$"
+        import nkUtilities.retrieveData__afterStatement as ras
+        pf_raw = ras.retrieveData__afterStatement( inpFile=inpFile, outFile=outFile, \
+                                                   expr_from=config["expr_from"], \
+                                                   expr_to=config["expr_to"] )
+        e_avg  = np.average( pf_raw[:,0:2], axis=1 )
+        p_dat  = np.copy( pf_raw[:,2] ) / params["photon.beam.current"]
+        pf_raw = np.concatenate( [ e_avg[:,np.newaxis], p_dat[:,np.newaxis] ], axis=1 )
+
+    # ------------------------------------------------- #
+    # --- [2] fit photon flux                       --- #
+    # ------------------------------------------------- #
+    pf_fit_uA  = fit__forRIproduction( xD=pf_raw[:,e_], yD=pf_raw[:,pf_], \
+                                       xI=EAxis, mode=params["photon.fit.method"], \
+                                       p0=params["photon.fit.p0"], \
+                                       threshold=params["photon.fit.Eth"] )
+    return( pf_fit_uA, pf_raw )
+
+
+# ========================================================= #
 # ===  fit__forRIproduction                             === #
 # ========================================================= #
+
 def fit__forRIproduction( xD=None, yD=None, xI=None, mode="linear", p0=None, threshold=None ):
     
-    if   ( mode == "linear" ):
+    if   ( mode == "linear"   ):
         fitFunc = itp.interp1d( xD, yD, kind="linear", fill_value="extrapolate" )
         yI      = fitFunc( xI )
     elif ( mode == "gaussian" ):
@@ -206,92 +320,6 @@ def calculate__parameters( params=None ):
     # --- [5] return                                --- #
     # ------------------------------------------------- #
     return( params )
-
-    
-# ========================================================= #
-# ===  estimate__RIproduction.py                        === #
-# ========================================================= #
-def estimate__RIproduction():
-
-    e_, pf_, xs_ = 0, 1, 1
-    mb2cm2       = 1.0e-27
-    paramsFile   = "dat/parameters.jsonc"
-    
-    # ------------------------------------------------- #
-    # --- [1] load parameters from file             --- #
-    # ------------------------------------------------- #
-    with open( paramsFile, "r" ) as f:
-        text     = re.sub(r'/\*[\s\S]*?\*/|//.*', '', f.read() )
-        params   = json.loads( text )
-    
-    # ------------------------------------------------- #
-    # --- [2] calculate parameters & define EAxis   --- #
-    # ------------------------------------------------- #
-    #  -- [2-1] energy axis                         --  #
-    EAxis  = np.linspace( params["integral.EAxis.min"], params["integral.EAxis.max"], \
-                          params["integral.EAxis.num"] )
-    #  -- [2-2] calculate other parameters          --  #
-    params = calculate__parameters( params=params )
-
-    # ------------------------------------------------- #
-    # --- [3] load photon flux                      --- #
-    # ------------------------------------------------- #
-    import nkUtilities.load__pointFile as lpf
-    pf_raw     = lpf.load__pointFile( inpFile=params["photon.filename"], returnType="point" )
-    if ( params["photon.binning"] ):
-        e_avg  = np.average( pf_raw[:,0:2], axis=1 )
-        p_dat  = np.copy( pf_raw[:,2] ) / params["photon.beam.current"]
-        pf_raw = np.concatenate( [ e_avg[:,np.newaxis], p_dat[:,np.newaxis] ], axis=1 )
-    pf_fit_uA  = fit__forRIproduction( xD=pf_raw[:,e_], yD=pf_raw[:,pf_], \
-                                       xI=EAxis, mode=params["photon.fit.method"], \
-                                       p0=params["photon.fit.p0"], \
-                                       threshold=params["photon.fit.Eth"] )
-    pf_fit     = params["photon.beam.current"] * pf_fit_uA
-    
-    # ------------------------------------------------- #
-    # --- [4] load cross-section                    --- #
-    # ------------------------------------------------- #
-    import nkUtilities.load__pointFile as lpf
-    xs_raw     = lpf.load__pointFile( inpFile=params["xsection.filename"], returnType="point")
-    xs_fit_mb  = fit__forRIproduction( xD=xs_raw[:,e_], yD=xs_raw[:,xs_], \
-                                       xI=EAxis, mode=params["xsection.fit.method"], \
-                                       p0=params["xsection.fit.p0"], \
-                                       threshold=params["xsection.fit.Eth"] )
-    xs_fit     = mb2cm2 * xs_fit_mb
-    
-    # ------------------------------------------------- #
-    # --- [5] calculate dY(E)                       --- #
-    # ------------------------------------------------- #
-    dYield       = params["target.tN_product"] * pf_fit * xs_fit
-    
-    # ------------------------------------------------- #
-    # --- [6] integrate dY(E) with respect to E     --- #
-    # ------------------------------------------------- #
-    if ( params["integral.method"] == "simpson" ):
-        Yield = itg.simpson( dYield, x=EAxis )
-    Nproduced = Yield * params["photon.beam.duration"] * 3600.0
-    Aproduced = Nproduced * params["product.lambda.1/s"]
-    lam1,lam2 = params["product.lambda.1/s"], params["decayed.lambda.1/s"]
-    t_max     = np.log( lam1/lam2 ) / ( lam1 - lam2 )
-    t_max_d   = t_max / (3600*24.0)
-    ratio     = ( lam2/( lam2-lam1 ) )*( np.exp( -lam1*t_max ) - np.exp( -lam2*t_max ) ) * 100.0
-    Adecayed  = ( ratio/100.0 ) * Aproduced
-    results   = { "Yield":Yield, "Nproduced":Nproduced, "Aproduced":Aproduced, \
-                  "t_max":t_max, "t_max_d":t_max_d, "ratio":ratio, "Adecayed":Adecayed }
-    
-    # ------------------------------------------------- #
-    # --- [7] draw sigma(E), phi(E), dY(E)          --- #
-    # ------------------------------------------------- #
-    draw__figures( params=params, EAxis=EAxis, pf_fit=pf_fit_uA, pf_raw=pf_raw, \
-                   xs_fit=xs_fit_mb, xs_raw=xs_raw, dYield=dYield )
-    
-    # ------------------------------------------------- #
-    # --- [8] save & return                         --- #
-    # ------------------------------------------------- #
-    Data = { "params":params, "EAxis":EAxis, "results":results, \
-             "pf_fit":pf_fit, "xs_fit":xs_fit, "dYield":dYield }
-    write__results( Data=Data, outFile=params["results.filename"] )
-    return( Yield )
 
 
 # ========================================================= #
