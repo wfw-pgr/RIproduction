@@ -82,7 +82,7 @@ def estimate__RIproduction():
     # ------------------------------------------------- #
     Data = { "params":params, "EAxis":EAxis, "results":results, \
              "pf_fit":pf_fit, "xs_fit":xs_fit, "dYield":dYield }
-    write__results( Data=Data, outFile=params["results.filename"] )
+    write__results( Data=Data, params=params )
     return( YieldRate )
 
 
@@ -163,21 +163,24 @@ def draw__figures( params=None, EAxis=None, pf_fit=None, xs_fit=None, \
     # ------------------------------------------------- #
     # --- [1] configure data                        --- #
     # ------------------------------------------------- #
-    if ( params["plot.dYield.norm.auto"] ):
-        params["plot.dYield.norm"] = 10.0**( math.floor( np.log10( abs( np.max( dYield ) ) ) ) )
-    xs_fit_plot = xs_fit        / params["plot.xsection.norm"]
-    pf_fit_plot = pf_fit        / params["plot.photon.norm"]
-    xs_raw_plot = xs_raw[:,xs_] / params["plot.xsection.norm"]
-    pf_raw_plot = pf_raw[:,pf_] / params["plot.photon.norm"]
-    dY_plot     = dYield        / params["plot.dYield.norm"]
-    xs_norm_str = "10^{" + str( round( math.log10( params["plot.xsection.norm"] ) ) ) + "}"
-    pf_norm_str = "10^{" + str( round( math.log10( params["plot.photon.norm"]   ) ) ) + "}"
-    dY_norm_str = "10^{" + str( round( math.log10( params["plot.dYield.norm"]   ) ) ) + "}"
-    label_xs    = "$\sigma_{fit}(E)/" + xs_norm_str + "\ \mathrm{(mb)}$"
-    label_pf    = "$\phi_{fit}(E)/"   + pf_norm_str + "\ \mathrm{(photons/MeV/uA/s)}$"
-    label_dY    = "$dY/ "             + dY_norm_str + "\ \mathrm{(atoms/s)}$"
-    label_xs    = "$\sigma_{raw}(E)/" + xs_norm_str + "\ \mathrm{(mb)}$"
-    label_pf    = "$\phi_{raw}(E)/"   + pf_norm_str + "\ \mathrm{(photons/MeV/uA/s)}$"
+    if ( params["plot.norm.auto"] ):
+        params["plot.dYield.norm"]   = 10.0**( math.floor( np.log10(abs(np.max(dYield))) ) )
+        params["plot.photon.norm"]   = 10.0**( math.floor( np.log10(abs(np.max(pf_fit))) ) )
+        params["plot.xsection.norm"] = 10.0**( math.floor( np.log10(abs(np.max(xs_fit))) ) )
+        
+    xs_fit_plot  = xs_fit        / params["plot.xsection.norm"]
+    pf_fit_plot  = pf_fit        / params["plot.photon.norm"]
+    xs_raw_plot  = xs_raw[:,xs_] / params["plot.xsection.norm"]
+    pf_raw_plot  = pf_raw[:,pf_] / params["plot.photon.norm"]
+    dY_plot      = dYield        / params["plot.dYield.norm"]
+    xs_norm_str  = "10^{" + str( round( math.log10( params["plot.xsection.norm"] ) ) ) + "}"
+    pf_norm_str  = "10^{" + str( round( math.log10( params["plot.photon.norm"]   ) ) ) + "}"
+    dY_norm_str  = "10^{" + str( round( math.log10( params["plot.dYield.norm"]   ) ) ) + "}"
+    label_xs_fit = "$\sigma_{fit}(E)/" + xs_norm_str + "\ \mathrm{(mb)}$"
+    label_pf_fit = "$\phi_{fit}(E)/"   + pf_norm_str + "\ \mathrm{(photons/MeV/uA/s)}$"
+    label_dY     = "$dY/ "             + dY_norm_str + "\ \mathrm{(atoms/MeV/s)}$"
+    label_xs_raw = "$\sigma_{raw}(E)/" + xs_norm_str + "\ \mathrm{(mb)}$"
+    label_pf_raw = "$\phi_{raw}(E)/"   + pf_norm_str + "\ \mathrm{(photons/MeV/uA/s)}$"
     
     # ------------------------------------------------- #
     # --- [2] configure plot                        --- #
@@ -203,15 +206,16 @@ def draw__figures( params=None, EAxis=None, pf_fit=None, xs_fit=None, \
     # --- [3] plot                                  --- #
     # ------------------------------------------------- #
     fig     = pl1.plot1D( config=config, pngFile=params["plot.filename"] )
-    fig.add__plot( xAxis=EAxis       , yAxis=dY_plot    , label=label_dY, color="C0" )
-    fig.add__plot( xAxis=EAxis       , yAxis=xs_fit_plot, label=label_xs, color="C1",\
-                   marker="none" )
-    fig.add__plot( xAxis=xs_raw[:,e_], yAxis=xs_raw_plot, label=label_xs, color="C1", \
-                   linestyle="none" )
-    fig.add__plot( xAxis=EAxis       , yAxis=pf_fit_plot, label=label_pf, color="C2", \
-                   marker="none" )
-    fig.add__plot( xAxis=pf_raw[:,e_], yAxis=pf_raw_plot, label=label_pf, color="C2", \
-                   linestyle="none" )
+    fig.add__plot( xAxis=EAxis       , yAxis=dY_plot    , label=label_dY    , \
+                   color="C0", marker="none"    )
+    fig.add__plot( xAxis=EAxis       , yAxis=xs_fit_plot, label=label_xs_fit, \
+                   color="C1", marker="none"    )
+    fig.add__plot( xAxis=xs_raw[:,e_], yAxis=xs_raw_plot, label=label_xs_raw, \
+                   color="C1", linestyle="none" )
+    fig.add__plot( xAxis=EAxis       , yAxis=pf_fit_plot, label=label_pf_fit, \
+                   color="C2", marker="none"    )
+    fig.add__plot( xAxis=pf_raw[:,e_], yAxis=pf_raw_plot, label=label_pf_raw, \
+                   color="C2", linestyle="none" )
     fig.add__legend( FontSize=9.0 )
     fig.set__axis()
     fig.save__figure()
@@ -221,7 +225,7 @@ def draw__figures( params=None, EAxis=None, pf_fit=None, xs_fit=None, \
 # ========================================================= #
 # ===  write__results                                   === #
 # ========================================================= #
-def write__results( Data=None, outFile="dat/results.dat", stdout="minimum" ):
+def write__results( Data=None, params=None, stdout="minimum" ):
 
     if ( Data is None ): sys.exit( "[estimate__RIproduction.py] Data == ???" )
     text1        = "[paramters]\n"
@@ -255,11 +259,25 @@ def write__results( Data=None, outFile="dat/results.dat", stdout="minimum" ):
         print( texts )
     elif ( stdout == "minimum" ):
         print( "\n" + text2 + "\n" )
-    with open( outFile, "w" ) as f:
-        f.write( texts )
-    print( "[estimate__RIproduction.py] results is saved in {}\n".format( outFile ) )
 
+    if ( params["results.summaryFile"] is not None ):
+        with open( params["results.summaryFile"], "w" ) as f:
+            f.write( texts )
+        print( "[estimate__RIproduction.py] summary    is saved in {}"\
+               .format( params["results.summaryFile"] ) )
 
+    if ( params["results.yieldFile"] is not None ):
+        import nkUtilities.save__pointFile as spf
+        Data_ = [ Data["EAxis"][:,np.newaxis] , Data["dYield"][:,np.newaxis],\
+                  Data["pf_fit"][:,np.newaxis], Data["xs_fit"][:,np.newaxis] ]
+        Data_ = np.concatenate( Data_, axis=1 )
+        names = [ "energy(MeV)", "dYield(atoms/MeV/s)", \
+                  "photonFlux(photons/MeV/uA/s)", "crossSection(mb)" ]
+        spf.save__pointFile( outFile=params["results.yieldFile"], Data=Data_, silent=True )
+        print( "[estimate__RIproduction.py] yield data is saved in {}"\
+               .format( params["results.yieldFile"] ) )
+
+    
 # ========================================================= #
 # ===  convert halflife's unit in seconds               === #
 # ========================================================= #
