@@ -14,7 +14,7 @@ import nkUtilities.configSettings as cfs
 def estimate__RIproduction():
 
     e_, pf_, xs_ =  0, 1, 1
-    mb2cm2       = 1.0e-27
+    mb2cm2       =  1.0e-27
     paramsFile   =  "dat/parameters.json"
     
     # ------------------------------------------------- #
@@ -58,16 +58,18 @@ def estimate__RIproduction():
     # --- [6] integrate dY(E) with respect to E     --- #
     # ------------------------------------------------- #
     if ( params["integral.method"] == "simpson" ):
-        Yield = itg.simpson( dYield, x=EAxis )
-    Nproduced = params["photon.beam.duration"] * Yield * 3600.0
-    Aproduced = params["product.lambda.1/s"]   * Nproduced
-    lam1,lam2 = params["product.lambda.1/s"], params["decayed.lambda.1/s"]
-    t_max     = np.log( lam1/lam2 ) / ( lam1 - lam2 )
-    t_max_d   = t_max / (3600*24.0)
-    ratio     = ( lam2/( lam2-lam1 ) )*( np.exp( -lam1*t_max ) - np.exp( -lam2*t_max ) )*100.0
-    Adecayed  = ( ratio/100.0 ) * Aproduced
-    results   = { "Yield":Yield, "Nproduced":Nproduced, "Aproduced":Aproduced, \
-                  "t_max":t_max, "t_max_d":t_max_d, "ratio":ratio, "Adecayed":Adecayed }
+        YieldRate = itg.simpson( dYield, x=EAxis )
+    N_yield    = params["photon.beam.duration"] * 60*60.0  * YieldRate 
+    A_yield    = params["product.lambda.1/s"]   * N_yield
+    lam1,lam2  = params["product.lambda.1/s"], params["decayed.lambda.1/s"]
+    t_max_s    = np.log( lam1/lam2 ) / ( lam1 - lam2 )
+    t_max      = halflife__unitConvert( { "value":t_max_s, "unit":"s" }, to_unit="d" )["value"]
+    ratio      = ( lam2/( lam2-lam1 ) )*( np.exp( -lam1*t_max_s ) - np.exp( -lam2*t_max_s ) )*100
+    A_decay    = ( ratio/100.0 ) * A_yield
+    efficiency = A_decay / ( params["target.activity.Bq"] * params["photon.beam.current.use"] \
+                             * params["photon.beam.duration"] )
+    results    = { "YieldRate":YieldRate, "N_yield":N_yield, "A_yield":A_yield, \
+                   "t_max":t_max, "ratio":ratio, "A_decay":A_decay, "efficiency":efficiency }
     
     # ------------------------------------------------- #
     # --- [7] draw sigma(E), phi(E), dY(E)          --- #
@@ -81,7 +83,7 @@ def estimate__RIproduction():
     Data = { "params":params, "EAxis":EAxis, "results":results, \
              "pf_fit":pf_fit, "xs_fit":xs_fit, "dYield":dYield }
     write__results( Data=Data, outFile=params["results.filename"] )
-    return( Yield )
+    return( YieldRate )
 
 
 # ========================================================= #
@@ -90,7 +92,10 @@ def estimate__RIproduction():
 
 def load__photonFlux( EAxis=None, params=None ):
 
-    e_, pf_ = 0, 1
+    e_, f_             = 0, 1
+    el_, eu_, pf_, er_ = 0, 1, 2, 3
+    expr_from          = "^#\s*e\-lower"
+    expr_to            = "^\s*$"
     
     # ------------------------------------------------- #
     # --- [1] load photon flux file                 --- #
@@ -101,17 +106,16 @@ def load__photonFlux( EAxis=None, params=None ):
     elif ( params["photon.filetype"] == "phits-out"      ):
         # -- expr_from = r"^#\s*e\-lower",  expr_to = r"^\s*$"  -- #
         import nkUtilities.retrieveData__afterStatement as ras
-        pf_raw = ras.retrieveData__afterStatement( inpFile=inpFile, outFile=outFile, \
-                                                   expr_from=params["expr_from"], \
-                                                   expr_to  =params["expr_to"]    )
-        e_avg  = np.average( pf_raw[:,0:2], axis=1 )
-        p_dat  = np.copy   ( pf_raw[:,  2] ) / params["photon.beam.current.sim"]
-        pf_raw = np.concatenate( [ e_avg[:,np.newaxis], p_dat[:,np.newaxis] ], axis=1 )
+        pf_ret = ras.retrieveData__afterStatement( inpFile  = params["photon.filename"], \
+                                                   expr_from=expr_from, expr_to=expr_to )
+        e_avg  =  0.5 * ( pf_ret[:,el_] + pf_ret[:,eu_] )
+        p_nrm  = np.copy( pf_ret[:,pf_] ) / params["photon.beam.current.sim"]
+        pf_raw = np.concatenate( [ e_avg[:,np.newaxis], p_nrm[:,np.newaxis] ], axis=1 )
 
     # ------------------------------------------------- #
     # --- [2] fit photon flux                       --- #
     # ------------------------------------------------- #
-    pf_fit_uA  = fit__forRIproduction( xD=pf_raw[:,e_], yD=pf_raw[:,pf_], \
+    pf_fit_uA  = fit__forRIproduction( xD=pf_raw[:,e_], yD=pf_raw[:,f_], \
                                        xI=EAxis, mode=params["photon.fit.method"], \
                                        p0=params["photon.fit.p0"], \
                                        threshold=params["photon.fit.Eth"] )
@@ -222,18 +226,26 @@ def write__results( Data=None, outFile="dat/results.dat", stdout="minimum" ):
     if ( Data is None ): sys.exit( "[estimate__RIproduction.py] Data == ???" )
     text1        = "[paramters]\n"
     text2        = "[results]\n"
+    keys1        = [ "t_max", "ratio" ]
+    keys2        = [ "YieldRate", "N_yield", "A_yield", "A_decay", "efficiency" ]
     paramsFormat = "{0:>30} :: {1}\n"
     resultFormat = "{0:>30} :: {1:15.8e}   {2}\n"
-    resultUnits  = { "Yield":"(atoms/s)", "Nproduced":"(atoms)", "Aproduced":"(Bq)", \
-                     "t_max":"(s)", "t_max_d":"(d)", "ratio":"(%)", "Adecayed":"(Bq)" }
+    resultUnits  = { "YieldRate":"(atoms/s)", "N_yield":"(atoms)", "A_yield":"(Bq)", \
+                     "t_max":"(d)", "ratio":"(%)", "A_decay":"(Bq)", \
+                     "efficiency":"(Bq(Ac)/(Bq(Ra) uA h))" }
         
     # ------------------------------------------------- #
     # --- [1] pack texts                            --- #
     # ------------------------------------------------- #
     for key,val in Data["params"].items():
         text1 += paramsFormat.format( key, val )
-    for key,val in Data["results"].items():
-        text2 += resultFormat.format( key, val, resultUnits[key] )
+    text2 += "\n" + " "*3 + "-"*25 + " "*3 + "[ Decay Time ]" + " "*3 + "-"*25 + "\n"
+    for key in keys1:
+        text2 += resultFormat.format( key, Data["results"][key], resultUnits[key] )
+    text2 += "\n" + " "*3 + "-"*25 + " "*3 + "[ Production ]" + " "*3 + "-"*25 + "\n"
+    for key in keys2:
+        text2 += resultFormat.format( key, Data["results"][key], resultUnits[key] )
+    text2 += "\n" + " "*3 + "-"*70 + "\n"
     texts  = text1 + text2 + "\n"
     
     # ------------------------------------------------- #
@@ -249,13 +261,24 @@ def write__results( Data=None, outFile="dat/results.dat", stdout="minimum" ):
 
 
 # ========================================================= #
+# ===  convert halflife's unit in seconds               === #
+# ========================================================= #
+def halflife__unitConvert( halflife, to_unit=None ):
+    timeUnitDict  = { "s":1.0, "m":60.0, "h":60*60.0, \
+                      "d":24*60*60.0, "y":365*24*60*60.0 }
+    halflife  = { "value": halflife["value"]*timeUnitDict[ halflife["unit"] ], "unit":"s" }
+    if ( to_unit is not None ):
+        halflife  = { "value": halflife["value"]/timeUnitDict[ to_unit ], "unit":to_unit }
+    return( halflife )
+
+
+# ========================================================= #
 # ===  calculate__parameters                            === #
 # ========================================================= #
 def calculate__parameters( params=None ):
 
     N_Avogadro   = 6.02e23
     mm2cm        = 0.1
-    timeUnitDict = { "s":1.0, "m":60.0, "h":3600.0, "d":86400.0, "y":31536000.0 }
     
     # ------------------------------------------------- #
     # --- [1] arguments                             --- #
@@ -265,42 +288,45 @@ def calculate__parameters( params=None ):
     # ------------------------------------------------- #
     # --- [2] calculate half-life time & lambda     --- #
     # ------------------------------------------------- #
-    #  -- [2-1] half-life time of nuclide           --  #
-    keys   = [ "target.halflife", "product.halflife", "decayed.halflife" ]
+    keys   = [ "target", "product", "decayed" ]
     for key in keys:
-        params[ key+".value" ] = params[ key+".value" ] * timeUnitDict[ params[ key +".unit"] ]
-
-    #  -- [2-2] decay constant lambda               --  #
-    params["target.lambda.1/s"]  = np.log(2.0) / params["target.halflife.value"]
-    params["product.lambda.1/s"] = np.log(2.0) / params["product.halflife.value"]
-    params["decayed.lambda.1/s"] = np.log(2.0) / params["decayed.halflife.value"]
-
+        key_h         = "{}.halflife"  .format( key )
+        key_l         = "{}.lambda.1/s".format( key )
+        params[key_h] = halflife__unitConvert( params[key_h] )
+        params[key_l] = np.log(2.0) / params[key_h]["value"]
+        
     # ------------------------------------------------- #
     # --- [3] volume & area model                   --- #
     # ------------------------------------------------- #
-    if   ( params["target.area.type"].lower() == "direct"   ):
+    if   ( params["target.area.type"].lower() == "direct" ):
         params["target.area.cm2"] = params["target.area.direct.cm2"]
-    elif ( params["target.area.type"].lower() == "cylinder" ):
+    elif ( params["target.area.type"].lower() == "disk"   ):
         params["target.area.cm2"] = 0.25*np.pi*( mm2cm*params["target.area.diameter.mm"] )**2
 
     # ------------------------------------------------- #
     # --- [4] thickness x atom density              --- #
     # ------------------------------------------------- #
-    params["target.atoms/cm3"]   = N_Avogadro*( params["target.g/cm3"] / params["target.g/mol"] )
+    params["target.atoms/cm3"] = N_Avogadro*( params["target.g/cm3"] / params["target.g/mol"] )
     if   ( params["target.thick.type"].lower() == "bq" ):
-        params["target.thick.cm"]   = params["target.activity.Bq"] / \
-            ( params["target.lambda.1/s"]*params["target.atoms/cm3"]*params["target.area.cm2"] )
+        N_atoms                     = params["target.activity.Bq"] / params["target.lambda.1/s"]
+        V_target                    = N_atoms  / params["target.atoms/cm3"]
+        params["target.thick.cm"]   = V_target / params["target.area.cm2"]
         params["target.tN_product"] = params["target.atoms/cm3"]*params["target.thick.cm"]
+        
     elif ( params["target.thick.type"].lower() == "direct" ):
         params["target.thick.cm"]   = params["target.thick.direct.mm"] * mm2cm
         params["target.tN_product"] = params["target.atoms/cm3"]*params["target.thick.cm"]
-    elif ( params["target.thick.type"].lower() == "fluence" ):
-        params["target.thick.cm"]   = params["target.activity.Bq"] / \
-            ( params["target.lambda.1/s"]*params["target.atoms/cm3"]*params["target.area.cm2"] )
-        params["target.tN_product"] = params["target.atoms/cm3"]
-        # thick t is included in :: photonFlux profile :: 
-        # fluence = count/m2 = count*m/m3, => fluence x volume = count*m
         
+    elif ( params["target.thick.type"].lower() == "fluence" ):
+        N_atoms                     = params["target.activity.Bq"] / params["target.lambda.1/s"]
+        V_target                    = N_atoms  / params["target.atoms/cm3"]
+        params["target.thick.cm"]   = V_target / params["target.area.cm2"]
+        params["target.tN_product"] = params["target.atoms/cm3"]
+        #
+        # thick t is included in :: photonFlux profile :: 
+        # fluence = count/m2 = count*m/m3,   =>   fluence * volume = count*m
+        # vol in phits's tally must be "V=1", or, flux will be devided by Volume V.
+        #
     # ------------------------------------------------- #
     # --- [5] return                                --- #
     # ------------------------------------------------- #

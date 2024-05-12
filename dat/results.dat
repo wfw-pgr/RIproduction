@@ -1,33 +1,28 @@
 [paramters]
               results.filename :: dat/results.dat
-              photon.expr_from :: ^#s*e-lower
-                photon.expr_to :: ^s*$
-            target.activity.Bq :: 132000.0
-         target.halflife.value :: 50457600000.0
-          target.halflife.unit :: y
-              target.area.type :: cylinder
-        target.area.direct.cm2 :: 0.0707
-       target.area.diameter.mm :: 10.0
+             results.time.unit :: d
                   target.g/cm3 :: 4.9
                   target.g/mol :: 297.0
+            target.activity.Bq :: 132000.0
+               target.halflife :: {'value': 50457600000.0, 'unit': 's'}
+              product.halflife :: {'value': 1287360.0, 'unit': 's'}
+              decayed.halflife :: {'value': 855360.0, 'unit': 's'}
              target.thick.type :: fluence
         target.thick.direct.mm :: 10.0
-        product.halflife.value :: 1287360.0
-         product.halflife.unit :: d
-        decayed.halflife.value :: 855360.0
-         decayed.halflife.unit :: d
+              target.area.type :: disk
+        target.area.direct.cm2 :: 0.0707
+       target.area.diameter.mm :: 10.0
                integral.method :: simpson
             integral.EAxis.min :: 0.0
             integral.EAxis.max :: 20.0
             integral.EAxis.num :: 201
-               photon.filetype :: energy-fluence
-               photon.filename :: dat/fluence_energy_phitsin.dat
-                photon.binning :: False
+               photon.filetype :: phits-out
+               photon.filename :: dat/fluence_energy.dat
              photon.fit.method :: linear
                  photon.fit.p0 :: None
                 photon.fit.Eth :: 6.4
-       photon.beam.current.sim :: 180.0
-       photon.beam.current.use :: 180.0
+       photon.beam.current.sim :: 200.0
+       photon.beam.current.use :: 200.0
           photon.beam.duration :: 6.0
              xsection.filename :: dat/xs__TENDL_Ra226_gn_Ra225_2021.dat
               xsection.fit.Eth :: 6.4
@@ -38,7 +33,7 @@
                    plot.yRange :: [0.0, 10.0, 11]
             plot.xsection.norm :: 100.0
               plot.photon.norm :: 100000000000.0
-              plot.dYield.norm :: 1000000.0
+              plot.dYield.norm :: 10000.0
          plot.dYield.norm.auto :: True
          BreitWigner.EAxis.min :: 0.0
          BreitWigner.EAxis.max :: 20.0
@@ -75,11 +70,17 @@
                target.thick.cm :: 1.2318251206232844e-06
              target.tN_product :: 9.931986531986532e+21
 [results]
-                         Yield ::  2.06475414e+07   (atoms/s)
-                     Nproduced ::  4.45986893e+11   (atoms)
-                     Aproduced ::  2.40130622e+05   (Bq)
-                         t_max ::  1.50341449e+06   (s)
-                       t_max_d ::  1.74006307e+01   (d)
+
+   -------------------------   [ Decay Time ]   -------------------------
+                         t_max ::  1.74006307e+01   (d)
                          ratio ::  4.45091063e+01   (%)
-                      Adecayed ::  1.06879994e+05   (Bq)
+
+   -------------------------   [ Production ]   -------------------------
+                     YieldRate ::  1.14708563e+05   (atoms/s)
+                       N_yield ::  2.47770496e+09   (atoms)
+                       A_yield ::  1.33405901e+03   (Bq)
+                       A_decay ::  5.93777743e+02   (Bq)
+                    efficiency ::  3.74859686e-06   (Bq(Ac)/(Bq(Ra) uA h))
+
+   ----------------------------------------------------------------------
 
