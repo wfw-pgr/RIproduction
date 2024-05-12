@@ -1,24 +1,27 @@
 {
-    
-    /* ------------------------------------------------------------------- */
-    /* ---  [1]  general settings                                      --- */
-    /* ------------------------------------------------------------------- */
-    "results.filename":"dat/results_BreitWigner_VarianLinac.dat", 
 
     /* ------------------------------------------------------------------- */
-    /* ---  [2]  target settings                                       --- */
+    /* ---  [1]  General settings                                      --- */
+    /* ------------------------------------------------------------------- */
+    "results.filename": "dat/results.dat",
+    "photon.expr_from": "^#\s*e\-lower", 
+    "photon.expr_to"  : "^\s*$",
+
+    /* ------------------------------------------------------------------- */
+    /* ---  [2]  target materials settings                             --- */
     /* ------------------------------------------------------------------- */
     "target.activity.Bq":132.0e3,        // (Bq)
     "target.halflife.value":1600.0,      // (unit)
     "target.halflife.unit":"y",
+    
     "target.area.type":"cylinder",       // "direct", "cylinder"
     "target.area.direct.cm2" :7.07e-2,   // if ( type == direct )
-    "target.area.diameter.mm":3.0,
-    // "target.g/cm3":5.0,                  // Ra
-    // "target.g/mol":226.0,                // Ra
+    "target.area.diameter.mm":10.0,
+    
     "target.g/cm3":4.9,                  // RaCl2
     "target.g/mol":297.0,                // RaCl2
-    "target.thick.type":"bq",       // "Bq", "direct", "fluence"
+    
+    "target.thick.type":"fluence",       // "Bq", "direct", "fluence"
     "target.thick.direct.mm":10.0,
 
     "product.halflife.value":14.9,       // (Ra-225)
@@ -38,16 +41,19 @@
     /* ---  [4]  photon flux settings                                  --- */
     /* ------------------------------------------------------------------- */
     /*  photon flux's unit  ::  ( photons/MeV/uA/s )                       */
+    // "photon.filetype":"phits-out", 
     // "photon.filename":"dat/photon_spectrum_fromPHITS_wTiW.dat",
     "photon.filetype":"energy-fluence", 
     "photon.filename":"dat/fluence_energy_phitsin.dat",
     "photon.binning":false,               // [ e_lower, e_upper, photon_data, error ] => true
+    
     // "photon.filename":"dat/photon_spectrum_fromPHITS_132kBq_RaCl2.dat", 
     // "photon.filename":"dat/photon_spectrum_VarianLinac.dat",
     "photon.fit.method":"linear",
-    "photon.fit.p0":null, // gaussian
+    "photon.fit.p0":null,                // gaussian
     "photon.fit.Eth":6.4,                // (MeV)
-    "photon.beam.current":180.0,         // (uA)
+    "photon.beam.current.sim":180.0,     // (uA)   current in a phits simulation
+    "photon.beam.current.use":180.0,     // (uA)   current assumed in this code
     "photon.beam.duration":6.0,          // (h)
 
     /* ------------------------------------------------------------------- */
@@ -105,13 +111,13 @@
     "LinacPhi.fit.method":"CubicSpline", // "CubicSpline", "exponential", "linear"
     "LinacPhi.fit.eRange":[0.0,20.0],    // (MeV)
     "LinacPhi.fit.Eth":0.0,              // (MeV)
-    // "LinacPhi.fit.method":"exponential", // "CubicSpline", "exponential", "linear"
-    // "LinacPhi.fit.eRange":[5.5,20.0],    // (MeV)
-    // "LinacPhi.fit.Eth":6.4,              // (MeV)
     "LinacPhi.fit.p0": [ 1.0e12, 1.0, 6.4, 1.0e11 ],
     "LinacPhi.norm.method":"simpson",    // "simpson"
     "LinacPhi.norm.current":1.0,         // (uA)
-    "LinacPhi.norm.e-g.efficiency":40.0, // (%) 
+    "LinacPhi.norm.e-g.efficiency":40.0, // (%)
+    
+    // "LinacPhi.fit.method":"exponential", // "CubicSpline", "exponential", "linear"
+    // "LinacPhi.fit.eRange":[5.5,20.0],    // (MeV)
+    // "LinacPhi.fit.Eth":6.4,              // (MeV)
 
-    "end":0
 }
