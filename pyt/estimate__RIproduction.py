@@ -103,6 +103,8 @@ def load__photonFlux( EAxis=None, params=None ):
     if   ( params["photon.filetype"] == "energy-fluence" ):
         import nkUtilities.load__pointFile as lpf
         pf_raw = lpf.load__pointFile( inpFile=params["photon.filename"], returnType="point" )
+        pf_raw[:,f_] = pf_raw[:,f_] / params["photon.beam.current.sim"]
+        
     elif ( params["photon.filetype"] == "phits-out"      ):
         # -- expr_from = r"^#\s*e\-lower",  expr_to = r"^\s*$"  -- #
         import nkUtilities.retrieveData__afterStatement as ras
