@@ -1,0 +1,46 @@
+{
+    /* ------------------------------------------------------------------- */
+    /* ---  [7]  cross-section using Breit-Wigner Formula              --- */
+    /* ------------------------------------------------------------------- */
+    "BreitWigner":{
+	
+	"BreitWigner.EAxis.min"        :0.0,           // (MeV)
+	"BreitWigner.EAxis.max"        :50.0,          // (MeV)
+	"BreitWigner.EAxis.num"        :501,
+	"BreitWigner.Er"               :13.45,         // (MeV)
+	"BreitWigner.Et"               :6.4,           // (MeV)
+	"BreitWigner.Gamma"            :3.97,          // (MeV)
+	"BreitWigner.sigma_r"          :521.0,         // (mb)
+	"BreitWigner.datFile"          :"dat/xs__BreitWigner_Ra226_gn_Ra225.dat",
+	"BreitWigner.pngFile"          :"png/xs__BreitWigner_Ra226_gn_Ra225.png",
+	"BreitWigner.label"            :"Ra226(g,n)Ra225",
+	"BreitWigner.xRange"           :[ 0.0,  20.0 ],
+	"BreitWigner.yRange"           :[ 0.0, 600.0 ],
+	"BreitWigner.xTicks"           :11,
+	"BreitWigner.yTicks"           :7,
+	
+    },
+
+    /* ------------------------------------------------------------------- */
+    /* ---  [8]  Varian Linac's phi(E) Model                           --- */
+    /* ------------------------------------------------------------------- */
+    "LinacPhi":{
+	
+	"LinacPhi.EAxis.min"           :0.0,           // (MeV)
+	"LinacPhi.EAxis.max"           :20.0,          // (MeV)
+	"LinacPhi.EAxis.num"           :201,
+	"LinacPhi.refFile"             :"dat/photon_spectrum_VarianLinac_originalData.dat",
+	"LinacPhi.outFile"             :"dat/photon_spectrum_VarianLinac.dat",
+	"LinacPhi.pngFile"             :"png/photon_spectrum_VarianLinac.png",
+	"LinacPhi.fit.method"          :"CubicSpline", // "CubicSpline", "exponential", "linear"
+	"LinacPhi.fit.eRange"          :[0.0,20.0],    // (MeV)
+	"LinacPhi.fit.Eth"             :0.0,           // (MeV)
+	"LinacPhi.fit.p0"              : [ 1.0e12, 1.0, 6.4, 1.0e11 ],
+	"LinacPhi.norm.method"         :"simpson",     // "simpson"
+	"LinacPhi.norm.current"        :1.0,           // (uA)
+	"LinacPhi.norm.e-g.efficiency" :40.0,          // (%)
+	
+    }
+
+}
+
